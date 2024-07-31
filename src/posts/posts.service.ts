@@ -1,4 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { PostsModel } from './entities/posts.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 export interface PostModel {
   id: number;
@@ -38,12 +41,17 @@ let posts: PostModel[] = [
 
 @Injectable()
 export class PostsService {
-  getAllPosts() {
-    return posts;
+  constructor(
+    @InjectRepository(PostsModel)
+    private readonly postsRepository: Repository<PostsModel>,
+  ) {}
+
+  async getAllPosts() {
+    return await this.postsRepository.find();
   }
 
-  getPostById(id: number) {
-    const post = posts.find((post) => post.id === +id);
+  async getPostById(id: number) {
+    const post = await this.postsRepository.findOne({ where: { id } });
 
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
@@ -52,23 +60,27 @@ export class PostsService {
     return post;
   }
 
-  createPost(author: string, title: string, content: string) {
-    const post: PostModel = {
-      id: posts.length + 1,
+  async createPost(author: string, title: string, content: string) {
+    const post = this.postsRepository.create({
       author,
       title,
       content,
       likeCount: 0,
       commentCount: 0,
-    };
+    });
 
-    posts.push(post);
+    const newPost = await this.postsRepository.save(post);
 
-    return post;
+    return newPost;
   }
 
-  updatePost(id: number, author?: string, title?: string, content?: string) {
-    const post = posts.find((post) => post.id === id);
+  async updatePost(
+    id: number,
+    author?: string,
+    title?: string,
+    content?: string,
+  ) {
+    const post = await this.postsRepository.findOne({ where: { id } });
 
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
@@ -86,20 +98,23 @@ export class PostsService {
       post.content = content;
     }
 
-    return post;
+    // save 메서드의 두 가지 기능
+    // 1) id를 기준으로 데이터가 존재하지 않으면 새로운 데이터를 생성
+    // 2) id를 기준으로 데이터가 존재하면 해당 데이터를 업데이트(수정)
+    const newPost = await this.postsRepository.save(post);
+
+    return newPost;
   }
 
-  deletePost(id: number) {
-    const post = posts.find((post) => post.id === id);
+  async deletePost(id: number) {
+    const post = await this.postsRepository.findOne({ where: { id } });
 
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
     }
 
-    posts = posts.filter((post) => post.id !== id);
+    await this.postsRepository.delete(id);
 
-    return {
-      message: '게시글이 삭제되었습니다.',
-    };
+    return id;
   }
 }
