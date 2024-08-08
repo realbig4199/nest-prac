@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   NotFoundException,
@@ -28,7 +29,7 @@ export class PostsController {
   @Post()
   postPost(
     @Body('authorId') authorId: number,
-    @Body('title') title: string,
+    @Body('title', new DefaultValuePipe('기본 제목 설정 가능')) title: string,
     @Body('content') content: string,
   ) {
     return this.postsService.createPost(authorId, title, content);
