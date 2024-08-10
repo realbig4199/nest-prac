@@ -1,11 +1,9 @@
+import { BaseModel } from 'src/common/entity/base.entity';
 import { UsersModel } from 'src/users/entities/users.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class PostsModel {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class PostsModel extends BaseModel {
   // UserModel과 연동한다 (ForeignKey)
   // null이 될 수 없음. 작성자가 없는 포스트는 존재하지 않음
   @ManyToOne(() => UsersModel, (user) => user.posts, {

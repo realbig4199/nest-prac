@@ -7,6 +7,9 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+  decodeBearerToken(rawToken: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
@@ -155,13 +158,17 @@ export class AuthService {
 
   /**
    * @author 김진태 <realbig4199@gmail.com>
-   * @decription 토큰 검증
+   * @decription 토큰 검증, 토큰 검증이 완료되면 페이로드를 반환
    * @param {string} token
    */
   verifyToken(token: string) {
-    return this.jwtService.verify(token, {
-      secret: JWT_SECRET,
-    });
+    try {
+      return this.jwtService.verify(token, {
+        secret: JWT_SECRET,
+      });
+    } catch (err) {
+      throw new UnauthorizedException('토큰이 만료됐거나 잘못된 토큰입니다.');
+    }
   }
 
   /**
