@@ -1,6 +1,10 @@
 import { IsIn, IsNumber, IsOptional } from 'class-validator';
 
 export class PaginatePostDto {
+  @IsNumber()
+  @IsOptional()
+  page?: number;
+
   // 이전 마지막 데이터의 ID
   @IsNumber()
   @IsOptional()

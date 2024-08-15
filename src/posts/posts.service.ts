@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptions, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
+import {
+  FindOptions,
+  FindOptionsWhere,
+  LessThan,
+  MoreThan,
+  Repository,
+} from 'typeorm';
 import { PostsModel } from './entities/posts.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -30,7 +36,43 @@ export class PostsService {
 
   // 1. 생성된 날짜를 기준으로 오름차순으로 정렬하는 페이지네이션만 구현
   async paginatePosts(dto: PaginatePostDto) {
+    if (dto.page) {
+      return this.pagePaginatePosts(dto);
+    } else {
+      return this.cursorPaginatePosts(dto);
+    }
+  }
+
+  async pagePaginatePosts(dto: PaginatePostDto) {
+    /**
+     * data: Data[],
+     * total: number;
+     *
+     * [1] [2] [3] [4]
+     */
+
+    const [posts, count] = await this.postsRepository.findAndCount({
+      skip: dto.take * (dto.page - 1),
+      take: dto.take,
+      order: {
+        createdAt: dto.order__createdAt,
+      },
+    });
+
+    return {
+      data: posts,
+      total: count,
+    };
+  }
+
+  async cursorPaginatePosts(dto: PaginatePostDto) {
     const where: FindOptionsWhere<PostsModel> = {};
+
+    if (dto.where__id_less_than) {
+      where.id = LessThan(dto.where__id_less_than);
+    } else if (dto.where__id_more_than) {
+      where.id = MoreThan(dto.where__id_more_than);
+    }
 
     const posts = await this.postsRepository.find({
       where,
